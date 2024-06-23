@@ -6,7 +6,7 @@ import java.util.StringTokenizer;
 class Main
 {
 	static String str;
-	static long strLen;
+	static int strLen;
 	static int[] numCountArr;
 	public static void main(String[] args) throws IOException
 	{
