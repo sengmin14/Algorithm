@@ -1,77 +1,201 @@
 import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.Arrays;
-import java.util.StringTokenizer;
-
-class Main
-{
-	static int N;
-	static int M;
-	static int R;
-	
-	static int[][] arr;
-	
-	public void rotate()
-	{
-		int count = Math.min(N, M) / 2;
-		
-		for(int j=0; j<count; j++) { //라인들 전부 돌리기
-			int temp = arr[j][j]; //맨 마지막에 넣기 위해 따로 저장!!!!배열에서 원소 위치 바꿀때 하나를 temp에 저장해두는거랑 같은 원리
-			
-			for(int k=j+1; k<M-j; k++)
-				arr[j][k-1] = arr[j][k];
-			
-			for(int k=j+1; k<N-j; k++)
-				arr[k-1][M-1-j] = arr[k][M-1-j];
-			
-			for(int k=M-2-j; k>=j; k--)
-				arr[N-1-j][k+1] = arr[N-1-j][k];
-			
-			for(int k=N-2-j; k>=j; k--)
-				arr[k+1][j] = arr[k][j];
-			
-			arr[j+1][j] = temp;
-		}
-	}
-	
-	public static void main(String[] args) throws IOException
-	{
-		Main T = new Main();
-		
-		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-		StringTokenizer st;
-		
-		st = new StringTokenizer(br.readLine());
-		N = Integer.parseInt(st.nextToken());
-		M = Integer.parseInt(st.nextToken());
-		R = Integer.parseInt(st.nextToken());
-		
-		arr = new int[N][M];
-		
-		for(int i = 0; i < N; i++)
-		{
-			st = new StringTokenizer(br.readLine());
-			for(int j = 0; j < M; j++)
-			{
-				arr[i][j] = Integer.parseInt(st.nextToken());
-			}
-		}
-		for(int i = 0; i < R; i++)
-		{
-			T.rotate();
-		}
-		
-		
-		for(int i = 0; i < N; i++)
-		{
-			for(int j = 0; j < M; j++)
-			{
-				System.out.print(arr[i][j] + " ");
-			}
-			System.out.println();
-		}
-		
-		
-	}
+        import java.io.IOException;
+        import java.io.InputStreamReader;
+        import java.util.StringTokenizer;
+ 
+public class Main {
+    static int n,m,r,num;
+    static int[][] map;
+    static int[][] tmpMap;
+ 
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        StringTokenizer st = new StringTokenizer(br.readLine());
+ 
+        n = Integer.parseInt(st.nextToken());
+        m = Integer.parseInt(st.nextToken());
+        r = Integer.parseInt(st.nextToken());
+ 
+        map = new int[n][m];
+ 
+        for(int i=0; i<n; i++){
+            st = new StringTokenizer(br.readLine());
+            for(int j=0; j<m; j++){
+                map[i][j] = Integer.parseInt(st.nextToken());
+            }
+        }
+ 
+ 
+        st = new StringTokenizer(br.readLine());
+        // 케이스 별로 연산의 수만큼 반복 계산
+        for(int i=0; i<r; i++){
+            //케이스 번호
+            num = Integer.parseInt(st.nextToken());
+ 
+            switch(num){
+//                연산 : 배열 상하 반전
+                case 1:
+                    one();
+                    break;
+//                2번 연산 : 좌우 반전
+                case 2:
+                    two();
+                    break;
+//                3번 연산 : 오른쪽 90도 회전
+                case 3:
+                    three();
+                    break;
+//                4번 연산 : 왼쪽 90도 회전
+                case 4:
+                    four();
+                    break;
+//                5번 연산 : 4그룹 1->2, 2->3, 3->4, 4->1
+                case 5:
+                    five();
+                    break;
+//                6번 연산 : 4그룹 1->4, 4->3, 3->2, 2->1
+                case 6:
+                    six();
+                    break;
+ 
+            }
+ 
+        }
+        //결과 배열 출력
+        for(int i=0; i<n; i++){
+            for(int j=0; j<m; j++){
+                System.out.print(map[i][j]+ " " );
+            }
+            System.out.println();
+        }
+    }
+ 
+    /*----------------------------------------------------------*/
+    public static void one(){
+        //1번 연산 : 배열 상하 반전
+        tmpMap = new int[n][m];
+        for(int i=0; i<n; i++){
+            for(int j=0; j<m; j++){
+            	tmpMap[i][j] = map[n-i-1][j];
+//                tmpMap[n-i-1][j] = map[i][j];  //행만 서로 반대
+            }
+        }
+        map = tmpMap;
+    }
+    public static void two(){
+        //2번 연산 : 좌우 반전
+        tmpMap = new int[n][m];
+        for(int i=0; i<n; i++){
+            for(int j=0; j<m; j++){
+               tmpMap[i][j] = map[i][m-1-j];
+            }
+        }
+        map = tmpMap;
+    }
+    public static void three(){
+        //3번 연산 : 오른쪽 90도 회전
+        tmpMap = new int[m][n];
+ 
+        for(int i = 0; i < m; i++)
+        {
+        	for(int j = 0; j < n; j++)
+        	{
+        		tmpMap[i][j] = map[n-j-1][i];
+        	}
+        }
+        //배열 바꾸기 => 결과 배열 크기 다르므로
+        int tmp = n;
+        n = m;
+        m= tmp;
+ 
+        map = tmpMap;
+ 
+    }
+    public static void four(){
+        //4번 연산 : 왼쪽 90도 회전
+        tmpMap = new int[m][n];
+        for(int i=0; i<n; i++){
+            for(int j=0; j<m; j++){
+                tmpMap[m-j-1][i] =  map[i][j];
+            }
+        }
+        //배열 바꾸기
+        int tmp = n;
+        n = m;
+        m= tmp;
+ 
+        map = tmpMap;
+ 
+ 
+    }
+    public static void five(){
+        //5번 연산 : 4그룹 1->2, 2->3, 3->4, 4->1
+        tmpMap = new int[n][m];
+        for(int i=0; i<n/2; i++){
+            for(int j=0; j<m/2; j++){
+                tmpMap[i][m/2+j] = map[i][j];
+ 
+            }
+        }
+ 
+        // 0,4 -> 3,4
+        for(int i=0; i<n/2; i++){
+            for(int j=m/2; j<m; j++){
+                tmpMap[n/2+i][j] = map[i][j];
+            }
+        }
+        // 3,4 -> 3,0
+        for(int i=n/2; i<n; i++){
+            for(int j=m/2; j<m; j++){
+                tmpMap[i][j-m/2] = map[i][j];
+            }
+        }
+        // 3,0 -> 0,0
+        for(int i=n/2; i<n; i++){
+            for(int j=0; j<m/2; j++){
+                tmpMap[i-n/2][j] = map[i][j];
+            }
+        }
+        map = tmpMap;
+ 
+    }
+    public static void six(){
+        //          4그룹 1->2, 2->3, 3->4, 4->1
+        //6번 연산 : 4그룹 1->4, 4->3, 3->2, 2->1
+        tmpMap = new int[n][m];
+        // 0,0 -> 3,0
+        for(int i=0; i<n/2; i++){
+            for(int j=0; j<m/2; j++){
+                tmpMap[n/2+i][j] = map[i][j];
+ 
+            }
+        }
+        
+ 
+        // 3,0 -> 3,4
+        for(int i=n/2; i<n; i++){
+            for(int j=0; j<m/2; j++){
+                tmpMap[i][j+m/2] = map[i][j];
+            }
+        }
+        // 3,4 -> 0,4
+        for(int i=n/2; i<n; i++){
+            for(int j=m/2; j<m; j++){
+                tmpMap[i-n/2][j] = map[i][j];
+            }
+        }
+       
+ 
+        // 0,4 -> 0,0
+        for(int i=0; i<n/2; i++){
+            for(int j=m/2; j<m; j++){
+                tmpMap[i][j-m/2] = map[i][j];
+            }
+        }
+        
+        map = tmpMap;
+ 
+    }
 }
+ 
