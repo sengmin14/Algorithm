@@ -1,245 +1,309 @@
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.*;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.PriorityQueue;
+import java.util.Queue;
+import java.util.StringTokenizer;
 
-public class Main
+class Point
 {
-    public static class Pair{
-        int x;
-        int y;
-        Pair(int x, int y){
-            this.x = x;
-            this.y = y;
-        }
-    }
+	int x;
+	int y;
+	int cnt;
+	public Point(int x, int y, int cnt)
+	{
+		this.x = x;
+		this.y = y;
+		this.cnt = cnt;
+	}	
+}
 
-    static int[] dx = {-1,0,1,0};
-    static int[] dy = {0,1,0,-1};
+class Prior implements Comparable<Prior>
+{
+	int x;
+	int y;
+	int dir;
+	int cnt;
+	public Prior(int x, int y, int dir, int cnt)
+	{
+		this.x = x;
+		this.y = y;
+		this.dir = dir;
+		this.cnt = cnt;
+	}
+	@Override
+	public int compareTo(Prior o)
+	{
+		if(this.cnt == o.cnt)
+		{
+			if(this.dir == o.dir)
+			{
+				if(this.x == o.x)
+				{
+					return this.x - o.x;
+				}
+				else
+				{
+					return this.y - o.y;
+				}
+			}
+			else
+			{
+				return this.dir - o.dir;
+			}
+		}
+		else
+		{
+			return o.cnt - this.cnt;
+		}
+	}
+}
 
-    public static void main(String[] args) throws Exception{
-        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-        StringTokenizer st = new StringTokenizer(br.readLine());
-        int T = Integer.parseInt(st.nextToken());
-        int blocklen = Integer.parseInt(st.nextToken());
-        int[][] base = new int[5][5];
-        int[] block = new int[blocklen];
-        int blockidx = 0;
-
-        StringBuilder sb = new StringBuilder();
-
-        for(int i = 0; i < 5; i++){
-            st = new StringTokenizer(br.readLine());
-            for(int j = 0; j < 5; j++){
-                base[i][j] = Integer.parseInt(st.nextToken());
-            }
-        }
-
-        st = new StringTokenizer(br.readLine());
-        for(int i = 0; i < blocklen; i++){
-            block[i] = Integer.parseInt(st.nextToken());
-        }
-
-        for(int turn = 0; turn < T; turn++) {
-            int num = -1;
-            int angle = 5;
-            int row = -1;
-            int col = -1;
-
-            int[][] nxtbase = new int[5][5];
-
-            for(int i1 = 1; i1 <= 3; i1++){
-                for(int j1 = 1; j1 <= 3; j1++){
-                    int[][] tmp = new int[5][5];
-                    for(int i = 0; i < 5; i++){
-                        for(int j = 0; j < 5; j++) tmp[i][j] = base[i][j];
-                    }
-
-                    for(int rot = 0; rot < 3; rot++) { // 최대 3번 돌림
-                        int x1 = i1-1;
-                        int y1 = j1-1;
-                        int x2 = i1+1;
-                        int y2 = j1+1;
-
-                        int[] box1 = new int[4];
-                        for(int i = 0; i < 3; i++) box1[i] = tmp[x1][y1+i];
-                        int[] box2 = new int[4];
-                        for(int i = 0; i < 3; i++) box2[i] = tmp[x1+i][y2];
-                        int[] box3 = new int[4];
-                        for(int i = 0; i < 3; i++) box3[i] = tmp[x2][y1+i];
-                        int[] box4 = new int[4];
-                        for(int i = 0; i < 3; i++) box4[i] = tmp[x1+i][y1];
-
-                        for(int i = 0; i < 3; i++) tmp[x1][y1+i] = box4[2-i];
-                        for(int i = 0; i < 3; i++) tmp[x1+i][y2] = box1[i];
-                        for(int i = 0; i < 3; i++) tmp[x2][y2-i] = box2[i];
-                        for(int i = 0; i < 3; i++) tmp[x2-i][y1] = box3[2-i];
-
-                        // 회전 완료하고 몇개 부서지는지 확인할 차례
-                        int[][] tmpck = new int[5][5];
-                        for(int i = 0; i < 5; i++){
-                            for(int j = 0; j < 5; j++) tmpck[i][j] = tmp[i][j];
-                        }
-
-                        boolean[][] vis = new boolean[5][5];
-                        int cnt = 0;
-                        for(int i = 0; i < 5; i++){
-                            for(int j = 0; j < 5; j++){
-                                if(vis[i][j]) continue;
-                                vis[i][j] = true;
-                                Queue<Pair> q = new ArrayDeque<>();
-                                q.offer(new Pair(i,j));
-                                int val = tmp[i][j];
-                                int subcnt = 0;
-                                while(!q.isEmpty()){
-                                    int x = q.peek().x;
-                                    int y = q.peek().y;
-                                    subcnt++;
-                                    q.poll();
-                                    for(int dir = 0; dir < 4; dir++){
-                                        int nx = x + dx[dir];
-                                        int ny = y + dy[dir];
-                                        if(nx < 0 || nx >= 5 || ny < 0 || ny >= 5) continue;
-                                        if(vis[nx][ny]) continue;
-                                        if(tmp[nx][ny] != val) continue;
-                                        vis[nx][ny] = true;
-                                        q.offer(new Pair(nx,ny));
-                                    }
-                                }
-                                if(subcnt >= 3) cnt += subcnt;
-                            }
-                        }
-
-                        if(cnt != 0){
-                            boolean judge = false;
-
-                            if(num < cnt){ // 유물수 큰거 우선
-                                num = cnt;
-                                angle = rot;
-                                row = i1;
-                                col = j1;
-                                judge = true;
-                            }
-                            else if(num == cnt){
-                                if(rot < angle){ // 회전한 각도 작은거 우선
-                                    num = cnt;
-                                    angle = rot;
-                                    row = i1;
-                                    col = j1;
-                                    judge = true;
-                                }
-                                else if(rot == angle){
-                                    if(j1 < col){ // 열 작은거 우선
-                                        num = cnt;
-                                        angle = rot;
-                                        row = i1;
-                                        col = j1;
-                                        judge = true;
-                                    }
-                                    else if(j1 == col){
-                                        if(i1 < row){ // 행 작은거 우선
-                                            num = cnt;
-                                            angle = rot;
-                                            row = i1;
-                                            col = j1;
-                                            judge = true;
-                                        }
-                                    }
-                                }
-                            }
-
-
-                            if(judge){
-                                for(int i = 0; i < 5; i++) {
-                                    for (int j = 0; j < 5; j++) {
-                                        nxtbase[i][j] = tmp[i][j];
-                                    }
-                                }
-                            }
-
-
-
-                        }
-
-                    }
-                }
-            }
-
-            if(num == -1) break;
-
-            // System.out.println(num + " " + row + " " + col + " " + angle);
-            for(int i = 0; i < 5; i++) {
-                for (int j = 0; j < 5; j++) {
-                    base[i][j] = nxtbase[i][j];
-                    //System.out.print(base[i][j] + " ");
-                }
-                //System.out.println();
-            }
-
-
-            int totbomb = 0;
-            while(true){
-
-                int bomb = 0;
-                boolean[][] vis = new boolean[5][5];
-
-
-                for(int i = 0; i < 5; i++){
-                    for(int j = 0; j < 5; j++){
-                        if(vis[i][j]) continue;
-                        Queue<Pair> q = new ArrayDeque<>();
-                        Queue<Pair> sv = new ArrayDeque<>();
-                        q.offer(new Pair(i,j));
-                        int val = base[i][j];
-                        vis[i][j] = true;
-                        int subcnt = 0;
-                        while(!q.isEmpty()){
-                            int x = q.peek().x;
-                            int y = q.peek().y;
-                            sv.offer(new Pair(x,y));
-                            subcnt++;
-                            q.poll();
-                            for(int dir = 0; dir < 4; dir++){
-                                int nx = x + dx[dir];
-                                int ny = y + dy[dir];
-                                if(nx < 0 || nx >= 5 || ny < 0 || ny >= 5) continue;
-                                if(vis[nx][ny]) continue;
-                                if(base[nx][ny] != val) continue;
-                                vis[nx][ny] = true;
-                                q.offer(new Pair(nx,ny));
-                            }
-                        }
-                        if(subcnt >= 3){
-                            bomb += subcnt;
-                            while(!sv.isEmpty()){
-                                int x = sv.peek().x;
-                                int y = sv.peek().y;
-                                sv.poll();
-                                base[x][y] = 0;
-                            }
-                        }
-                    }
-                }
-
-                if(bomb == 0) break;
-                totbomb += bomb;
-
-
-                for(int i = 0; i  < 5; i++){
-                    for(int j = 4; j >= 0; j--){
-                        if(base[j][i] == 0){
-                            base[j][i] = block[blockidx];
-                            blockidx++;
-                        }
-                    }
-                }
-
-
-            }
-
-            sb.append(totbomb + " ");
-        }
-
-        System.out.println(sb);
-
-    }
+class Main
+{
+	static int[] di = {-1, 0, 1, 0};
+	static int[] dj = {0, 1, 0, -1};
+	
+	static int N = 5;
+	static int K;
+	static int M;
+	
+	static int[][] map = new int[N][N];
+	static int[][] tmpMap = new int[N][N];
+	
+	static int[] arr;
+	static int arrIdx;
+	
+	static boolean boom;
+	
+	static int solution;
+	
+	public void fill()
+	{
+		for(int j = 0; j < 5; j++)
+		{
+			for(int i = 4; i >= 0; i--)
+			{
+				if(map[i][j] == 0)
+				{
+					map[i][j] = arr[arrIdx];
+					arrIdx++;
+				}
+			}
+		}
+	}
+	
+	public void removeBFS()
+	{
+		Queue<Point> q = new LinkedList<>();
+		
+		boolean[][] visited = new boolean[N][N];
+		
+		boom = false;
+		
+		for(int i = 0; i < 5; i++)
+		{
+			for(int j = 0; j < 5; j++)
+			{
+				Queue<Point> count = new LinkedList<>();
+				if(visited[i][j] == false)
+				{
+					visited[i][j] = true;
+					int answer = 1;
+					q.add(new Point(i, j, 1));
+					count.add(new Point(i, j, 0));
+					while(!q.isEmpty())
+					{
+						Point tmp = q.poll();
+						for(int d = 0; d < 4; d++)
+						{
+							int ni = tmp.x + di[d];
+							int nj = tmp.y + dj[d];
+							if(ni >= 0 && ni < N && nj >= 0 && nj < N && visited[ni][nj] == false && tmpMap[i][j] == tmpMap[ni][nj])
+							{
+								q.add(new Point(ni, nj, tmp.cnt+1));
+								count.add(new Point(ni, nj, tmp.cnt));
+								visited[ni][nj] = true;
+								answer++;
+							}
+						}
+					}
+					if(answer >= 3)
+					{
+						solution+=answer;
+						while(!count.isEmpty())
+						{
+							Point tmp = count.poll();
+							tmpMap[tmp.x][tmp.y] = 0;
+							boom = true;
+						}
+					}
+					
+				}
+			}
+		}
+	}
+	
+	public int BFS()
+	{
+		Queue<Point> q = new LinkedList<>();
+		boolean[][] visited = new boolean[N][N];
+		
+		int returnAnswer = 0;
+		
+		for(int i = 0; i < 5; i++)
+		{
+			for(int j = 0; j < 5; j++)
+			{
+				if(visited[i][j] == false)
+				{
+					visited[i][j] = true;
+					int answer = 1;
+					q.add(new Point(i, j, 1));
+					while(!q.isEmpty())
+					{
+						Point tmp = q.poll();
+						for(int d = 0; d < 4; d++)
+						{
+							int ni = tmp.x + di[d];
+							int nj = tmp.y + dj[d];
+							if(ni >= 0 && ni < N && nj >= 0 && nj < N && visited[ni][nj] == false && tmpMap[i][j] == tmpMap[ni][nj])
+							{
+								q.add(new Point(ni, nj, tmp.cnt+1));
+								visited[ni][nj] = true;
+								answer++;
+							}
+						}
+					}
+					if(answer >= 3)
+					{
+						returnAnswer += answer;
+					}
+					
+				}
+			}
+		}
+		return returnAnswer;
+	}
+	
+	public void rotate(int x, int y, int cnt)
+	{
+		int[][] tmp = new int[3][3];
+		
+		// 배열돌리기
+		for(int k = 0; k < cnt; k++)
+		{
+			for(int i = 0; i < 3; i++)
+			{
+				for(int j = 0; j < 3; j++)
+				{
+					tmp[i][j] = tmpMap[x+3-1-j][y+i];
+				}
+			}
+			
+			// 3x3배열 tmpMap배열에 저장
+			for(int i = 0; i < 3; i++)
+			{
+				for(int j = 0; j < 3; j++)
+				{
+					tmpMap[i+x][j+y] = tmp[i][j];
+				}
+			}
+		}
+	}
+	
+	public void realMap()
+	{
+		for(int i = 0; i < N; i++)
+		{
+			for(int j = 0; j < N; j++)
+			{
+				map[i][j] = tmpMap[i][j];
+			}
+		}
+	}
+	
+	public void copyMap()
+	{
+		for(int i = 0; i < N; i++)
+		{
+			for(int j = 0; j < N; j++)
+			{
+				tmpMap[i][j] = map[i][j];
+			}
+		}
+	}
+	
+	public static void main(String[] args) throws IOException
+	{
+		Main T = new Main();
+		
+		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+		StringTokenizer st;
+		
+		st = new StringTokenizer(br.readLine());
+		K = Integer.parseInt(st.nextToken());
+		M = Integer.parseInt(st.nextToken());
+		arr = new int[M];
+		
+		for(int i = 0; i < N; i++)
+		{
+			st = new StringTokenizer(br.readLine());
+			for(int j = 0; j < N; j++)
+			{
+				map[i][j] = Integer.parseInt(st.nextToken());
+				tmpMap[i][j] = map[i][j];
+			}
+		}
+		
+		st = new StringTokenizer(br.readLine());
+		for(int i = 0; i < M; i++)
+		{
+			arr[i] = Integer.parseInt(st.nextToken());
+		}
+		
+		for(int count = 0; count < K; count++)
+		{
+			solution = 0;
+			PriorityQueue<Prior> pq = new PriorityQueue<>();
+			for(int i = 0; i < 3; i++)
+			{
+				for(int j = 0; j < 3; j++)
+				{
+					for(int k = 1; k < 4; k++)
+					{
+						T.rotate(i, j, k);
+						int score = T.BFS();
+						pq.add(new Prior(i, j, k, score));
+						T.copyMap();
+					}
+				}
+			}
+			
+			Prior tmp = pq.poll();
+			T.rotate(tmp.x, tmp.y, tmp.dir);
+			
+			while(true)
+			{
+				T.removeBFS();
+				if(boom == false)
+				{
+					break;
+				}
+				else
+				{
+					T.realMap();
+				}
+				T.fill();
+				T.copyMap();
+				
+			}
+			if(solution > 0)
+			{
+				System.out.print(solution + " ");
+			}
+		}
+	}
 }
