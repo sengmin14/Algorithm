@@ -3,22 +3,21 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.Queue;
 import java.util.StringTokenizer;
 
-class Person
+class Point
 {
 	int x;
 	int y;
-	int moveCnt;
-	boolean alive;
-	public Person(int x, int y, int moveCnt, boolean alive)
+	int no;
+	public Point(int x, int y, int no)
 	{
 		this.x = x;
 		this.y = y;
-		this.moveCnt = moveCnt;
-		this.alive = alive;
+		this.no = no;
 	}
-	
 }
 
 class Exit
@@ -33,9 +32,8 @@ class Exit
 	
 }
 
-
-public class Main {
-	
+class Main
+{
 	static int[] di = {-1, 1, 0, 0};
 	static int[] dj = {0, 0, 1, -1};
 	
@@ -43,133 +41,201 @@ public class Main {
 	static int M;
 	static int K;
 	static int[][] map;
-	static Person[] person;
-	static ArrayList[][] personMap;
+	static int[][] tmpMap;
+	
+	static ArrayList<Integer>[][] runnerMap;
+	static ArrayList<Integer>[][] tmpRunnerMap;
+	static Queue<Point> q;
 	static Exit exit;
 	
-	static int moveCnt;
-	
-	public int abs(int x, int y)
+	public int length(int x, int y)
 	{
-		return Math.abs(exit.x - x) + Math.abs(exit.y - y);
+		return Math.abs(x - exit.x) + Math.abs(y - exit.y);
 	}
 	
-	public void move(int i)
+	public void runnerMove(int i, int j, int k)
 	{
-		if(person[i].alive == true)
+		int len = length(i, j);
+		for(int d = 0; d < 4; d++)
 		{
-			int nowLength = abs(person[i].x, person[i].y);
-			for(int d = 0; d < 4; d++)
+			int ni = i + di[d];
+			int nj = j + dj[d];
+			if(ni >= 0 && ni < N && nj >= 0 && nj < N && map[ni][nj] <= 0)
 			{
-				int ni = person[i].x + di[d];
-				int nj = person[i].y + dj[d];
-				if(ni >= 0 && ni < N && nj >= 0 && nj < N)
+				if(map[ni][nj] == 0)
 				{
-					if(map[ni][nj] == 0)
+					int compareLen = length(ni, nj);
+					if(compareLen < len)
 					{
-						int length = abs(ni, nj);
-						if(length < nowLength)
-						{
-							if(ni == exit.x && nj == exit.y)
-							{
-								person[i].alive = false;
-							}
-							person[i].x = ni;
-							person[i].y = nj;
-							moveCnt++;
-							return;
-						}
+						runnerMap[ni][nj].add(k);
+						q.add(new Point(ni, nj, k));
+						return;
 					}
+				}
+				else
+				{
+					return;
 				}
 			}
 		}
+		runnerMap[i][j].add(k);
+		q.add(new Point(i, j, k));
 	}
 	
-	public void rotate(int fx, int fy, int len)
+	public void move()
 	{
-        for(int i = fx; i < fx+len; i++)
-        {
-        	
-        }
-	}
-	
-	public void spin(int len)
-	{
-		boolean stop = false;
-        int fx = -1;
-        int fy = -1;
-		
-		 // 모든 경우의 수 for문으로 브루트 포스 (10^2 * 10^4 + @ )
-        for(int i = 0; i < N; i++){
-            if(i + len >= N) continue;
-            for(int j = 0; j < N; j++){
-                if(j + len >=N) continue;
-                boolean judge1 = false;
-                boolean judge2 = false;
-                for(int i2 = i; i2 <= i + len; i2++){
-                    for(int j2 = j; j2 <= j + len; j2++){
-                        if(i2 == exit.x && j2 == exit.y) judge1 = true;
-                        else if(personMap[i2][j2].size() > 0) judge2 = true;
-                        
-                    }
-                }
-
-                if(judge1 && judge2){
-                    fx = i;
-                    fy = j;
-                    stop = true;
-                }
-
-                if(stop) break;
-            }
-            if(stop) break;
-        }
-        
-        rotate(fx, fy, len);
-	}
-	
-	public void findLength()
-	{
-		int tmp = Integer.MAX_VALUE;
-		for(int i = 1; i <= M; i++)
-		{
-			if(person[i].alive == false)
-			{
-				continue;
-			}
-			int nowTmp = Math.abs(exit.x - person[i].x) + Math.abs(exit.y - person[i].y);
-			if(tmp > nowTmp)
-			{
-				tmp = nowTmp;
-			}
-		}
-//		System.out.println(tmp);
-		spin(tmp);
-	}
-	
-	
-	public void start()
-	{
-		for(int i = 1; i <= M; i++)
-		{
-			move(i);
-		}
-		
+		q = new LinkedList<>();
 		for(int i = 0; i < N; i++)
 		{
 			for(int j = 0; j < N; j++)
 			{
-				personMap[i][j] = new ArrayList<>();
+				for(int k = runnerMap[i][j].size()-1; k >= 0; k--)
+				{
+					runnerMove(i, j, runnerMap[i][j].get(k));
+					runnerMap[i][j].remove(k);
+				}
 			}
 		}
 		
-		for(int i = 1; i <= M; i++)
+		
+	}
+	
+	public int checkLen()
+	{
+		int len = Integer.MAX_VALUE;
+		while(!q.isEmpty())
 		{
-			if(person[i].alive == true)
+			Point tmp = q.poll();
+			int comLen = length(tmp.x, tmp.y);
+			if(len > comLen)
 			{
-				personMap[person[i].x][person[i].y].add(i);
+				len = comLen;
 			}
 		}
+		
+		return len;
+	}
+	
+	public void copyRunnerMap(int x, int y, int len)
+	{
+		tmpRunnerMap = new ArrayList[len+1][len+1];
+		for(int i = 0; i <= len; i++)
+		{
+			for(int j = 0; j <= len; j++)
+			{
+				tmpRunnerMap[i][j] = new ArrayList<>();
+			}
+		}
+		
+		for(int i = 0; i <= len; i++)
+		{
+			for(int j = 0; j <= len; j++)
+			{
+				for(int k = runnerMap[x+len-j][y+i].size()-1; k >= 0; k--)
+				{
+					tmpRunnerMap[i][j].add(runnerMap[x+len-j][y+i].get(k));
+				}
+			}
+		}
+		
+		for(int i = 0; i <= len; i++)
+		{
+//			System.out.println(Arrays.toString(tmpRunnerMap[i]));
+		}
+	}
+	
+	public void copyMap(int x, int y, int len)
+	{
+		tmpMap = new int[len+1][len+1];
+		for(int i = 0; i <= len; i++)
+		{
+			for(int j = 0; j <= len; j++)
+			{
+				if(map[x+len-j][y+i] > 0)
+				{
+					map[x+len-j][y+i] -= 1;
+				}
+				tmpMap[i][j] = map[x+len-j][y+i];
+			}
+		}
+	}
+	
+	public void rotate(int x, int y, int len)
+	{
+		copyMap(x, y, len);
+		copyRunnerMap(x, y, len);
+		
+		for(int i = 0; i <= len; i++)
+		{
+			for(int j = 0; j <= len; j++)
+			{
+				map[i+x][j+y] = tmpMap[i][j];
+				if(map[i+x][i+y] == -1)
+				{
+					exit = new Exit(i+1, i+y);
+				}
+			}
+		}
+		
+		for(int i = 0; i <= len; i++)
+		{
+			for(int j = 0; j <= len; j++)
+			{
+				runnerMap[i+x][j+y] = tmpRunnerMap[i][j];
+			}
+		}
+	}
+	
+	public void findIdx(int len)
+	{
+		for(int i = 0; i < N; i++)
+		{
+			for(int j = 0; j < N; j++)
+			{
+				int x = i;
+				int y = j;
+				int nx = i + len;
+				int ny = j + len;
+				boolean ex = false;
+				boolean hu = false;
+				for(int a = i; a <= nx; a++)
+				{
+					for(int b = j; b <= ny; b++)
+					{
+//						System.out.println(a + " " + b + " " + len);
+						if(map[a][b] == -1)
+						{
+							ex = true;
+						}
+						if(runnerMap[a][b].size() > 0)
+						{
+							hu = true;
+						}
+						if(ex == true && hu == true)
+						{
+							// System.out.println(x + " " + y);
+							rotate(x, y, len);
+							return;
+						}	
+					}
+				}
+			}
+		}
+		
+		
+	}
+	
+	public void solve()
+	{		
+		move();
+		int len = checkLen();
+		findIdx(len); // 길이구하고 회전까지 포함
+		
+		for(int i = 0; i < N; i++)
+		{
+			
+		}
+		
 	}
 	
 	public static void main(String[] args) throws IOException
@@ -180,20 +246,15 @@ public class Main {
 		StringTokenizer st;
 		
 		st = new StringTokenizer(br.readLine());
-		N = Integer.parseInt(st.nextToken());
-		M = Integer.parseInt(st.nextToken());
-		K = Integer.parseInt(st.nextToken());
-		map = new int[N][N];
-		person = new Person[M+1];
-		personMap = new ArrayList[N][N];
+		N = Integer.parseInt(st.nextToken()); // N x N 격자판
+		M = Integer.parseInt(st.nextToken()); // runner 수
+		K = Integer.parseInt(st.nextToken()); // 게임 시간
 		
-		for(int i = 0; i < N; i++)
-		{
-			for(int j = 0; j < N; j++)
-			{
-				personMap[i][j] = new ArrayList<>();
-			}
-		}
+		map = new int[N][N];
+		tmpMap = new int[N][N];
+		runnerMap = new ArrayList[N][N];
+		tmpRunnerMap = new ArrayList[N][N];
+		q = new LinkedList<>();
 		
 		for(int i = 0; i < N; i++)
 		{
@@ -204,21 +265,33 @@ public class Main {
 			}
 		}
 		
+		for(int i = 0; i < N; i++)
+		{
+			for(int j = 0; j < N; j++)
+			{
+				runnerMap[i][j] = new ArrayList<>();
+			}
+		}
+		
 		for(int i = 1; i <= M; i++)
 		{
 			st = new StringTokenizer(br.readLine());
 			int x = Integer.parseInt(st.nextToken())-1;
 			int y = Integer.parseInt(st.nextToken())-1;
-			person[i] = new Person(x, y, 0, true);
+			runnerMap[x][y].add(i);
 		}
 		
 		st = new StringTokenizer(br.readLine());
 		int x = Integer.parseInt(st.nextToken())-1;
 		int y = Integer.parseInt(st.nextToken())-1;
 		exit = new Exit(x, y);
+		map[x][y] = -1;
 		
-		T.start();
-		T.findLength();
-//		System.out.println(moveCnt);
+		for(int count = 0; count < 2; count++)
+		{
+			T.solve();
+			System.out.println();
+		}
+//		T.solve();
 	}
 }
